@@ -19,6 +19,25 @@ def convert_size_to_bytes(size_str):
         return int(size_str[:-1]) * units[unit]
     return int(size_str)
 
+def get_subtitle_action(subtitle_codec):
+    """
+    Determine the appropriate subtitle action based on the codec.
+    - Copy if the subtitle format is supported (e.g., srt, ass, subrip).
+    - Convert to SubRip (srt) if the format is not widely supported.
+    - Discard if no subtitles are present.
+    """
+    supported_codecs = {"srt", "subrip", "ass", "webvtt"}  # Widely supported text-based formats
+    bitmap_codecs = {"hdmv_pgs_subtitle", "dvd_subtitle", "vobsub"}  # Bitmap-based formats
+
+    if not subtitle_codec:
+        return ["-sn"]  # Discard subtitles if none are present
+    elif subtitle_codec in supported_codecs:
+        return ["-c:s", "copy"]  # Copy supported text-based subtitles
+    elif subtitle_codec in bitmap_codecs:
+        return ["-c:s", "srt"]  # Convert bitmap-based subtitles to SubRip
+    else:
+        return ["-c:s", "srt"]  # Convert unsupported formats to SubRip
+
 def process_video(input_file, size_limit_bytes, conversion_count):
     filename = Path(input_file).name
     dir_path = Path(input_file).parent
@@ -67,11 +86,8 @@ def process_video(input_file, size_limit_bytes, conversion_count):
     # Determine audio codec action: copy if it's AAC, AC3, or EAC3, else convert to AAC
     audio_action = "copy" if audio_codec_info in {"aac", "ac3", "eac3"} else "aac"
 
-    # Handle subtitle stream: convert to a compatible format or discard if unsupported (needs fixing/supported types adding)
-    if not subtitle_codec_info:
-        subtitle_action = ["-sn"]  # Discard subtitles if none or not compatible
-    else:
-        subtitle_action = ["-c:s", "copy"]  # Copy the subtitles if already in a compatible format
+    # Determine subtitle action based on the detected subtitle codec
+    subtitle_action = get_subtitle_action(subtitle_codec_info)
 
     # Construct and run the FFmpeg command for conversion, using -n to skip existing files
     ffmpeg_cmd = [
