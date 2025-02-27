@@ -67,7 +67,7 @@ def process_video(input_file, size_limit_bytes, conversion_count):
     # Determine audio codec action: copy if it's AAC, AC3, or EAC3, else convert to AAC
     audio_action = "copy" if audio_codec_info in {"aac", "ac3", "eac3"} else "aac"
 
-    # Handle subtitle stream: convert to a compatible format or discard if unsupported
+    # Handle subtitle stream: convert to a compatible format or discard if unsupported (needs fixing/supported types adding)
     if not subtitle_codec_info:
         subtitle_action = ["-sn"]  # Discard subtitles if none or not compatible
     else:
